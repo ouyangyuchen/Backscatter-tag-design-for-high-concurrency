@@ -11,22 +11,25 @@ def loadWave(filename: str, lowpass: bool = False, window_size: int = 3):
     return config, result
 
 
-def deNoise(wave_arr: np.ndarray, window_size: int = 3):
-    wave_shift = np.roll(wave_arr, window_size)
-    wave_shift[:window_size] = 0.0
+def deNoise(wave_arr: np.ndarray, shift: int = 1):
+    # cfreq = np.array([100000]) * 2 * np.pi
+    # sos = signal.butter(N=1, Wn=cfreq, btype='lp', fs=10000000, output='sos')
+    # wave_arr = signal.sosfilt(sos, wave_arr)
+    wave_shift = np.roll(wave_arr, shift)
+    wave_shift[:shift] = 0.0
     wave_arr -= wave_shift
-    hamming = signal.windows.hamming(window_size)
-    wave_arr = signal.convolve(wave_arr, hamming, mode='same')
-    return wave_arr[window_size:]
+    return wave_arr
 
 
 if __name__ == '__main__':
     fig, axes = plt.subplots(2, 1)
     wavefile = 'tags5_noise1.npy'
-    _, wavearray = loadWave(os.path.join('signals', wavefile))
-    axes[0].plot(wavearray[100: 500])
+    config, wavearray = loadWave(os.path.join('signals', wavefile))
+    axes[0].plot(wavearray[:500])
+    axes[0].set_title('square waveform')
 
-    wavearray = deNoise(wavearray, window_size=3)
-    axes[1].plot(wavearray[100: 500])
-
+    wavearray = deNoise(wavearray, shift=2)
+    axes[1].plot(wavearray[:500])
+    axes[1].set_title('extract edges')
+    plt.tight_layout()
     plt.show()
