@@ -3,7 +3,10 @@ import numpy as np
 
 def F(rx_signal:np.ndarray, possible_path:np.ndarray, index:int, max_peiod:int):
     def distance(x1: np.ndarray, x2:np.ndarray):
-        return pow(x1[1] - x2[1], 2) + pow(x1[2] - x2[2], 2)
+        if x1[1]*x2[1] + x1[2]*x2[2] > 0:
+            return pow(x1[1] - x2[1], 2) + pow(x1[2] - x2[2], 2)
+        else:
+            return pow(x1[1] + x2[1], 2) + pow(x1[2] + x2[2], 2)
     tag_to_decide = possible_path[index]
     original_path = possible_path[0:index]
     original_tag_num = original_path.max()
