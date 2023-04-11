@@ -20,17 +20,18 @@ def loadWave(filename: str, is_matlab=True) -> np.ndarray:
 
 def extractPeaks(signal: np.ndarray, thres: float):
     """Return nx3 matrix from the peaks of raw signal."""
-    n = signal.shape[0]
+    indices = np.argwhere(np.abs(signal) >= thres)
 
-    edges = np.zeros((n, 3), dtype=np.float64)
-    cnt = 0
-    for i in range(n):
-        if np.abs(signal[i]) > thres:
-            edges[cnt, 0] = i
-            edges[cnt, 1] = np.real(signal[i])
-            edges[cnt, 2] = np.imag(signal[i])
-            cnt += 1
-    return edges[:cnt, :]
+    edges = []
+    for i in indices:
+        if len(edges) == 0 or i - edges[-1] > 2:
+            edges.append(i)
+        elif abs(signal[i]) > abs(signal[edges[-1]]):
+            edges[-1] = i
+    edges = np.array(edges)
+    real_part = np.real(signal[edges])
+    imag_part = np.imag(signal[edges])
+    return np.concatenate((edges, real_part, imag_part), axis=1)
 
 
 def find_n_max(prob_matrix: np.ndarray, path_to_keep: int):
@@ -54,8 +55,5 @@ def normalize(arr: np.ndarray):
 
 
 if __name__ == "__main__":
-    path_to_keep = 3
-    prob_matrix = np.zeros(shape=(2, 5), dtype=np.float32)
-    prob_matrix[:, :] = np.random.random(size=(2, 5))
-    print(prob_matrix)
-    print(find_n_max(prob_matrix, path_to_keep))
+    signal = loadWave("./signals/tags20_noise_0.50_2000.mat")
+    extractPeaks(signal, thres=5)
