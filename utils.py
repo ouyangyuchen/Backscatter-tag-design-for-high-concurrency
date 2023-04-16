@@ -1,37 +1,41 @@
 import numpy as np
-import scipy.io
 
 
-def loadWave(filename: str, is_matlab=True) -> np.ndarray:
-    """
-    Load signal from file and extract the raw edges.
-    """
-    # load wave signal into python
-    if is_matlab:
-        wave = scipy.io.loadmat(filename)["wave"][0, :]
+def F(
+    rx_signal: np.ndarray,
+    possible_path: np.ndarray,
+    index: int,
+    max_peiod: int,
+    alpha: float,
+):
+    def distance(x1: np.ndarray, x2: np.ndarray):
+        if np.dot(x1[1:], x2[1:]) > 0:
+            return pow(x1[1] - x2[1], 2) + pow(x1[2] - x2[2], 2)
+        else:
+            return pow(x1[1] + x2[1], 2) + pow(x1[2] + x2[2], 2)
+
+    tag_to_decide = possible_path[index]
+    original_path = possible_path[0:index]
+    original_tag_num = original_path.max()
+
+    # find the last indices of each class in the orignal path
+    classes = np.zeros((original_tag_num,), dtype=int)
+    for i, tag in enumerate(original_path):
+        classes[tag - 1] = i
+
+    p = 0.0
+    if tag_to_decide <= original_tag_num:
+        # classified to old tags
+        for i in range(original_tag_num):
+            if (i + 1) == tag_to_decide:
+                p += alpha / distance(rx_signal[classes[i]], rx_signal[index])
+            else:
+                p += distance(rx_signal[classes[i]], rx_signal[index])
     else:
-        wave = np.load(filename)
-    # substract with its shift signal
-    temp = np.roll(wave, 1)
-    temp[:1] = complex(0.0, 0.0)
-    impulses = (wave - temp)[20:-20]
-    return impulses
-
-
-def extractPeaks(signal: np.ndarray, thres: float):
-    """Return nx3 matrix from the peaks of raw signal."""
-    indices = np.argwhere(np.abs(signal) >= thres)
-
-    edges = []
-    for i in indices:
-        if len(edges) == 0 or i - edges[-1] > 2:
-            edges.append(i)
-        elif abs(signal[i]) > abs(signal[edges[-1]]):
-            edges[-1] = i
-    edges = np.array(edges)
-    real_part = np.real(signal[edges])
-    imag_part = np.imag(signal[edges])
-    return np.concatenate((edges, real_part, imag_part), axis=1)
+        # classified to the new tag
+        for i in range(original_tag_num):
+            p += distance(rx_signal[classes[i]], rx_signal[index])
+    return p
 
 
 def find_n_max(prob_matrix: np.ndarray, path_to_keep: int):
@@ -55,5 +59,4 @@ def normalize(arr: np.ndarray):
 
 
 if __name__ == "__main__":
-    signal = loadWave("./signals/tags20_noise_0.50_2000.mat")
-    extractPeaks(signal, thres=5)
+    pass
