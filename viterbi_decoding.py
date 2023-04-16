@@ -1,5 +1,5 @@
-from metric import F
 from utils import *
+from extract import ExtractPeaks
 from tqdm import tqdm
 
 
@@ -43,6 +43,6 @@ def viterbi(rx_signal: np.ndarray):
 
 
 if __name__ == "__main__":
-    signal = loadWave("./signals/tags20_noise_0.50_2000.mat")
-    rx_signal = extractPeaks(signal, thres=5.0)
+    ep = ExtractPeaks(filename='./signals/tags20_noise_0.50_20000.mat')
+    rx_signal = ep.extract()
     res = viterbi(rx_signal)
