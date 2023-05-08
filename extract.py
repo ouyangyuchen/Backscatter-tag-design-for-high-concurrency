@@ -6,8 +6,9 @@ from scipy.io import loadmat
 
 
 class ExtractPeaks:
-    shift = 1
-    away = 20
+    SHIFT = 1
+    AWAY = 20
+    MIN_SNR = 10  # the lower bound of SNR (unit: gain, not dB)
 
     def __init__(self, filename: str) -> None:
         """
@@ -19,7 +20,14 @@ class ExtractPeaks:
         """
         file = loadmat(filename)
         self.wave = file["wave"][0, :]
-        self.ES = np.average(np.square(abs(self.wave)))         # power of signal
+        temp = np.roll(self.wave, ExtractPeaks.SHIFT)
+        temp[:ExtractPeaks.SHIFT] = complex(0.0, 0.0)
+        self.impulses = (self.wave - temp)[ExtractPeaks.AWAY:]  # neglect the head elements
+
+        # get variance of noise in real and imag parts
+        self.filtered = self.impulses[abs(self.impulses) < np.average(abs(self.impulses)) / 2]
+        noises = np.concatenate([np.real(self.filtered), np.imag(self.filtered)])
+        self.sigma = np.sqrt(np.average(noises ** 2) / 2)
 
         self.freq, self.amp, self.phases, self.tags = None, None, None, None
         if file.__contains__("freq"):
@@ -48,25 +56,21 @@ class ExtractPeaks:
         np.ndarray[n][3]
             indices | real amplitudes | imag amplitudes
         """
-        # substract with its shift signal
-        temp = np.roll(self.wave, ExtractPeaks.shift)
-        temp[:1] = complex(0.0, 0.0)
-        impulses = (self.wave - temp)[ExtractPeaks.away:]  # neglect the head elements
         # extract the transition edges in the signal
-        indices = np.argwhere(np.abs(impulses) >= thres)
+        indices = np.argwhere(np.abs(self.impulses) >= thres)
         edges = []
         for i in indices:
             if len(edges) == 0 or i - edges[-1] > duration:
                 edges.append(i)
-            elif np.abs(np.angle(impulses[i]) - np.angle(impulses[edges[-1]])) > 0.15:
+            elif np.abs(np.angle(self.impulses[i]) - np.angle(self.impulses[edges[-1]])) > 0.15:
                 edges.append(i)
-            elif abs(impulses[i]) > abs(impulses[edges[-1]]):
+            elif abs(self.impulses[i]) > abs(self.impulses[edges[-1]]):
                 edges[-1] = i
         edges = np.array(edges)
-        real_part = np.real(impulses[edges])
-        imag_part = np.imag(impulses[edges])
+        real_part = np.real(self.impulses[edges])
+        imag_part = np.imag(self.impulses[edges])
         res = np.concatenate((edges, real_part, imag_part), axis=1)
-        return res, impulses
+        return res
 
     def extractRate(self, signal: np.ndarray, fs: float) -> float:
         """number of edges extracted / number of total edges.
@@ -120,6 +124,16 @@ class ExtractPeaks:
     #             cnt += 1
     #     return cnt / time.size
 
+    def plotEdges(self, n: int):
+        fig, axes = plt.subplots(2, 1)
+        axes[0].plot(self.wave[0:n])
+        axes[1].plot(self.impulses[0:n])
+        axes[1].plot(self.filtered[0:n])
+        plt.show()
+        plt.close(fig)
+
 
 if __name__ == "__main__":
-    pass
+    filename = "signals/tags20_snr40_db.mat"
+    ep = ExtractPeaks(filename)
+    # ep.plotEdges(200)
