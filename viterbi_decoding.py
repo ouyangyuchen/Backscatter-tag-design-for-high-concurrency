@@ -18,16 +18,14 @@ def viterbi(rx_signal: np.ndarray, alpha: float):
     for i in tqdm(range(1, peaks_num)):  # loop of peaks
         peak = rx_signal[i]
         tag_num = result_path.max()
-        prob_matrix = np.zeros((curr_path_num, tag_num + 1), dtype=np.float64)
+        prob_matrix = np.zeros((curr_path_num, tag_num + 1), dtype=np.float32)
         for j in range(curr_path_num):  # loop of paths
             max_class = result_path[j].max()
-            for k in range(1, max_class + 2):  # loop of class
-                # suppose the current peak is classified to k
-                possible_path = np.array(result_path[j, :])
-                possible_path[i] = k
-                prob_matrix[j, k - 1] = prob_paths[j] * F(
-                    rx_signal, possible_path, index=i, max_peiod=1, alpha=alpha
-                )
+
+            original_path = np.array(result_path[j, :])
+            prob_matrix[j, 0: max_class + 1] = prob_paths[j] * F(rx_signal, original_path[0: i], max_class, index=i,
+                                                                 max_period=1, alpha=alpha)
+
         # find k max prob indices
         indices = find_n_max(prob_matrix, path_to_keep)
         curr_path_num = len(indices)
@@ -38,12 +36,13 @@ def viterbi(rx_signal: np.ndarray, alpha: float):
             prob_paths[j] = prob_matrix[indices[j]]
         result_path = temp_res
         normalize(prob_paths)
+
     print("Classified tags number: %d" % result_path.max())
     return result_path[0, :]
 
 
 if __name__ == "__main__":
-    ep = ExtractPeaks(filename='signals/tags20_fs7_noise_0.50_20000.mat')
+    ep = ExtractPeaks(filename='signals/tags20_snr30_db.mat')
     es = ep.ES
     rx_signal, impulses = ep.extract()
     SNR, sig = 15, 1
