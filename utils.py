@@ -3,9 +3,10 @@ import numpy as np
 
 def F(
     rx_signal: np.ndarray,
-    possible_path: np.ndarray,
+    original_path: np.ndarray,
+    max_class: int,
     index: int,
-    max_peiod: int,
+    max_period: int,
     alpha: float,
 ):
     def distance(x1: np.ndarray, x2: np.ndarray):
@@ -14,6 +15,31 @@ def F(
         else:
             return pow(x1[1] + x2[1], 2) + pow(x1[2] + x2[2], 2)
 
+    result_prob = np.zeros((max_class + 1, ), dtype=np.float32)
+    classes = np.zeros((max_class,), dtype=int)
+
+    for i, tag in enumerate(original_path):
+        classes[tag - 1] = i
+
+    # existing tags
+    for tag_to_decide in range(max_class):
+        p = 0.0
+        for i in range(max_class):
+            if i == tag_to_decide:
+                p += alpha / distance(rx_signal[classes[i]], rx_signal[index])
+            else:
+                p += distance(rx_signal[classes[i]], rx_signal[index])
+        result_prob[tag_to_decide] = p
+
+    # new tag
+    p = 0.0
+    for i in range(max_class):
+        p += distance(rx_signal[classes[i]], rx_signal[index])
+    result_prob[max_class] = p
+    return result_prob
+
+
+'''
     tag_to_decide = possible_path[index]
     original_path = possible_path[0:index]
     original_tag_num = original_path.max()
@@ -36,6 +62,7 @@ def F(
         for i in range(original_tag_num):
             p += distance(rx_signal[classes[i]], rx_signal[index])
     return p
+'''
 
 
 def find_n_max(prob_matrix: np.ndarray, path_to_keep: int):
