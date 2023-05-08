@@ -21,21 +21,15 @@ def F(
     for i, tag in enumerate(original_path):
         classes[tag - 1] = i
 
+    distance_list = []
+    for i in range(max_class):
+        distance_list.append(distance(rx_signal[classes[i]], rx_signal[index]))
+    distance_list_sum = sum(distance_list)
     # existing tags
     for tag_to_decide in range(max_class):
-        p = 0.0
-        for i in range(max_class):
-            if i == tag_to_decide:
-                p += alpha / distance(rx_signal[classes[i]], rx_signal[index])
-            else:
-                p += distance(rx_signal[classes[i]], rx_signal[index])
-        result_prob[tag_to_decide] = p
-
+        result_prob[tag_to_decide] = distance_list_sum - distance_list[tag_to_decide] + alpha / distance_list[tag_to_decide]
     # new tag
-    p = 0.0
-    for i in range(max_class):
-        p += distance(rx_signal[classes[i]], rx_signal[index])
-    result_prob[max_class] = p
+    result_prob[max_class] = distance_list_sum
     return result_prob
 
 
