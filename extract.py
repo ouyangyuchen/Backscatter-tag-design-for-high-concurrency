@@ -19,7 +19,8 @@ class ExtractPeaks:
         filename: '.mat' file, must contains "wave", ("freq", "amp", "phases" are optional)
         """
         file = loadmat(filename)
-        self.wave = file["wave"][0, :]
+        self.wave = file["wave"].flatten()
+
         temp = np.roll(self.wave, ExtractPeaks.SHIFT)
         temp[:ExtractPeaks.SHIFT] = complex(0.0, 0.0)
         self.impulses = (self.wave - temp)[ExtractPeaks.AWAY:]  # neglect the head elements
@@ -124,16 +125,18 @@ class ExtractPeaks:
     #             cnt += 1
     #     return cnt / time.size
 
-    def plotEdges(self, n: int):
+    def plotEdges(self, rx_signal: np.ndarray, n: int):
         fig, axes = plt.subplots(2, 1)
         axes[0].plot(self.wave[0:n])
         axes[1].plot(self.impulses[0:n])
-        axes[1].plot(self.filtered[0:n])
+        edges = rx_signal[rx_signal[:, 0] < n, :]
+        axes[1].scatter(edges[:, 0], edges[:, 1], c='r')
         plt.show()
         plt.close(fig)
 
 
 if __name__ == "__main__":
-    filename = "signals/tags20_snr40_db.mat"
+    filename = "signals/tags20_snr30_db.mat"
     ep = ExtractPeaks(filename)
-    # ep.plotEdges(200)
+    rx_signal = ep.extract(thres=5)
+    ep.plotEdges(rx_signal, n=200)

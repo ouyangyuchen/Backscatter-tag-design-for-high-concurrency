@@ -15,8 +15,7 @@ def viterbi(rx_signal: np.ndarray, alpha: float):
     result_path[0, 0] = 1
     prob_paths[0] = 1
 
-    for i in tqdm(range(1, peaks_num)):  # loop of peaks
-        peak = rx_signal[i]
+    for i in tqdm(range(1, peaks_num), desc="Classifying..."):  # loop of peaks
         tag_num = result_path.max()
         prob_matrix = np.zeros((curr_path_num, tag_num + 1), dtype=np.float64)
         for j in range(curr_path_num):  # loop of paths
@@ -43,9 +42,10 @@ def viterbi(rx_signal: np.ndarray, alpha: float):
 
 
 if __name__ == "__main__":
-    ep = ExtractPeaks(filename='signals/tags20_fs7_noise_0.50_20000.mat')
-    es = ep.ES
-    rx_signal, impulses = ep.extract()
-    SNR, sig = 15, 1
-    alpha = (sig ** 4) * (es ** 2) * (10 ** (-SNR / 5))
+    ep = ExtractPeaks(filename='signals/tags20_snr30_db.mat')
+    rx_signal = ep.extract()
+
+    # determine alpha, according to the credibility
+    alpha = 12 * ep.sigma ** 2
+
     res = viterbi(rx_signal, alpha)
