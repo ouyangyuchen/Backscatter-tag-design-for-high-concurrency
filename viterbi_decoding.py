@@ -3,7 +3,7 @@ from extract import ExtractPeaks
 from tqdm import tqdm
 
 
-def viterbi(rx_signal: np.ndarray):
+def viterbi(rx_signal: np.ndarray, alpha: float):
     # initialize
     peaks_num = np.shape(rx_signal)[0]
     path_to_keep = 3
@@ -26,7 +26,7 @@ def viterbi(rx_signal: np.ndarray):
                 possible_path = np.array(result_path[j, :])
                 possible_path[i] = k
                 prob_matrix[j, k - 1] = prob_paths[j] * F(
-                    rx_signal, possible_path, index=i, max_peiod=1, alpha=15.0**4
+                    rx_signal, possible_path, index=i, max_peiod=1, alpha=alpha
                 )
         # find k max prob indices
         indices = find_n_max(prob_matrix, path_to_keep)
@@ -43,6 +43,9 @@ def viterbi(rx_signal: np.ndarray):
 
 
 if __name__ == "__main__":
-    ep = ExtractPeaks(filename='./signals/tags20_noise_0.50_20000.mat')
-    rx_signal = ep.extract()
-    res = viterbi(rx_signal)
+    ep = ExtractPeaks(filename='signals/tags20_fs7_noise_0.50_20000.mat')
+    es = ep.ES
+    rx_signal, impulses = ep.extract()
+    SNR, sig = 15, 1
+    alpha = (sig ** 4) * (es ** 2) * (10 ** (-SNR / 5))
+    res = viterbi(rx_signal, alpha)

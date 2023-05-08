@@ -1,3 +1,6 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
 from utils import *
 from scipy.io import loadmat
 
@@ -16,6 +19,8 @@ class ExtractPeaks:
         """
         file = loadmat(filename)
         self.wave = file["wave"][0, :]
+        self.ES = np.average(np.square(abs(self.wave)))         # power of signal
+
         self.freq, self.amp, self.phases, self.tags = None, None, None, None
         if file.__contains__("freq"):
             self.freq = file["freq"][0, :]
@@ -27,7 +32,7 @@ class ExtractPeaks:
             self.phases = file["phases"][0, :]
             assert self.tags == self.phases.size
 
-    def extract(self, thres: float = 5.0, duration:int = 2) -> np.ndarray:
+    def extract(self, thres: float = 5.0, duration: int = 2):
         """Extract the peaks in the signal.
 
         Parameters
@@ -46,22 +51,24 @@ class ExtractPeaks:
         # substract with its shift signal
         temp = np.roll(self.wave, ExtractPeaks.shift)
         temp[:1] = complex(0.0, 0.0)
-        signal = (self.wave - temp)[ExtractPeaks.away:]        # neglect the head elements
+        impulses = (self.wave - temp)[ExtractPeaks.away:]  # neglect the head elements
         # extract the transition edges in the signal
-        indices = np.argwhere(np.abs(signal) >= thres)
+        indices = np.argwhere(np.abs(impulses) >= thres)
         edges = []
         for i in indices:
             if len(edges) == 0 or i - edges[-1] > duration:
                 edges.append(i)
-            elif abs(signal[i]) > abs(signal[edges[-1]]):
+            elif np.abs(np.angle(impulses[i]) - np.angle(impulses[edges[-1]])) > 0.15:
+                edges.append(i)
+            elif abs(impulses[i]) > abs(impulses[edges[-1]]):
                 edges[-1] = i
         edges = np.array(edges)
-        real_part = np.real(signal[edges])
-        imag_part = np.imag(signal[edges])
-        temp = np.concatenate((edges, real_part, imag_part), axis=1)
-        return temp
+        real_part = np.real(impulses[edges])
+        imag_part = np.imag(impulses[edges])
+        res = np.concatenate((edges, real_part, imag_part), axis=1)
+        return res, impulses
 
-    def extractRate(self, signal: np.ndarray, fs: float = 1e8) -> float:
+    def extractRate(self, signal: np.ndarray, fs: float) -> float:
         """number of edges extracted / number of total edges.
 
         Available only when the input file has "freq", "phases".
@@ -74,7 +81,7 @@ class ExtractPeaks:
             sampling frequency of the wave signal.
         """
         assert signal.shape[1] == 3
-        if self.tags == None:
+        if self.tags is None:
             raise ValueError(
                 "The input matlab data must contain phases and frequencies."
             )
@@ -83,40 +90,36 @@ class ExtractPeaks:
         ub = np.floor((2 * np.pi * self.freq * t_max + self.phases) / np.pi)
         cnt = np.sum(ub - lb + 1)
         return signal.shape[0] / cnt
-    
-    def extractAcc(self, signal:np.ndarray, fs:float = 1e+8) -> float:
-        """The proportion of valid edges in the extracted array. Valid 
-        edges correspond to exactly one transition edge among all tags.
 
-        Available only when the input file has "freq", "phases".
-
-        Parameters
-        ---
-        signal: np.ndarray[n][3]
-            the result matrix returned from extract().
-        fs: float
-            sampling frequency of the wave signal.
-        """
-        assert signal.shape[1] == 3
-        if self.tags == None:
-            raise ValueError(
-                "The input matlab data must contain phases and frequencies."
-            )
-        time = (signal[:, 0] + ExtractPeaks.away) / fs
-        tolerant = 2 * self.freq * (abs(ExtractPeaks.shift) + 1) / fs
-        cnt = 0
-        for t in time:
-            phase = 2 * self.freq * t + self.phases / np.pi
-            std = np.abs(phase - np.around(phase)) <= tolerant
-            if std.sum() == 1:
-                cnt += 1
-        return cnt / time.size
+    # def extractAcc(self, signal: np.ndarray, fs: float) -> float:
+    #     """The proportion of valid edges in the extracted array. Valid
+    #     edges correspond to exactly one transition edge among all tags.
+    #
+    #     Available only when the input file has "freq", "phases".
+    #
+    #     Parameters
+    #     ---
+    #     signal: np.ndarray[n][3]
+    #         the result matrix returned from extract().
+    #     fs: float
+    #         sampling frequency of the wave signal.
+    #     """
+    #     assert signal.shape[1] == 3
+    #     if self.tags is None:
+    #         raise ValueError(
+    #             "The input matlab data must contain phases and frequencies."
+    #         )
+    #     time = (signal[:, 0] + ExtractPeaks.away) / fs
+    #     tolerant = 2 * self.freq * (ExtractPeaks.shift + 1) / fs
+    #     cnt = 0
+    #     for t in time:
+    #         phase = 2 * self.freq * t + self.phases / np.pi
+    #         std = np.abs(phase - np.around(phase))
+    #         std = std <= tolerant
+    #         if std.sum() == 1:
+    #             cnt += 1
+    #     return cnt / time.size
 
 
 if __name__ == "__main__":
-    ep = ExtractPeaks(filename="./signals/tags20_noise_0.50_20000.mat")
-    signal = ep.extract(thres=5.0)
-    rate = ep.extractRate(signal, fs=1e+8)
-    acc = ep.extractAcc(signal, fs=1e8)
-    print("extracted rate: \t %.4f" % rate)
-    print("extracted accuracy: \t %.4f" % acc)
+    pass
