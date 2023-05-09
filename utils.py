@@ -15,11 +15,17 @@ def F(
         else:
             return pow(x1[1] + x2[1], 2) + pow(x1[2] + x2[2], 2) + 1e-5
 
-    result_prob = np.zeros((max_class + 1, ), dtype=np.float32)
-    classes = np.zeros((max_class,), dtype=int)
-
-    for i, tag in enumerate(original_path):
-        classes[tag - 1] = i
+    result_prob = np.zeros((max_class + 1,), dtype=np.float32)
+    classes = np.zeros((max_class,), dtype=int) - 1
+    # find the nearest edge for each class, start from the end
+    cnt = 0
+    for j in range(index - 1, -1, -1):
+        tag = original_path[j]
+        if classes[tag - 1] < 0:
+            classes[tag - 1] = j
+            cnt += 1
+            if cnt >= max_class:
+                break
 
     distance_list = []
     for i in range(max_class):
