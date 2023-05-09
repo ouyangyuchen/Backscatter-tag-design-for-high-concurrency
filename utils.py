@@ -2,18 +2,18 @@ import numpy as np
 
 
 def F(
-    rx_signal: np.ndarray,
-    original_path: np.ndarray,
-    max_class: int,
-    index: int,
-    max_period: int,
-    alpha: float,
+        rx_signal: np.ndarray,
+        original_path: np.ndarray,
+        max_class: int,
+        index: int,
+        max_period: int,
+        alpha: float,
 ):
     def distance(x1: np.ndarray, x2: np.ndarray):
         if np.dot(x1[1:], x2[1:]) > 0:
-            return pow(x1[1] - x2[1], 2) + pow(x1[2] - x2[2], 2)
+            return pow(x1[1] - x2[1], 2) + pow(x1[2] - x2[2], 2) + 1e-5
         else:
-            return pow(x1[1] + x2[1], 2) + pow(x1[2] + x2[2], 2)
+            return pow(x1[1] + x2[1], 2) + pow(x1[2] + x2[2], 2) + 1e-5
 
     result_prob = np.zeros((max_class + 1, ), dtype=np.float32)
     classes = np.zeros((max_class,), dtype=int)
@@ -27,36 +27,13 @@ def F(
     distance_list_sum = sum(distance_list)
     # existing tags
     for tag_to_decide in range(max_class):
-        result_prob[tag_to_decide] = distance_list_sum - distance_list[tag_to_decide] + alpha / distance_list[tag_to_decide]
+        result_prob[tag_to_decide] = distance_list_sum - distance_list[tag_to_decide] + \
+                                     min(1 / distance_list[tag_to_decide], 1e5) * alpha
     # new tag
     result_prob[max_class] = distance_list_sum
+    result_prob[:max_class + 1] += 1e-5 * np.max(result_prob)
+    result_prob = result_prob / np.max(result_prob)
     return result_prob
-
-
-'''
-    tag_to_decide = possible_path[index]
-    original_path = possible_path[0:index]
-    original_tag_num = original_path.max()
-
-    # find the last indices of each class in the orignal path
-    classes = np.zeros((original_tag_num,), dtype=int)
-    for i, tag in enumerate(original_path):
-        classes[tag - 1] = i
-
-    p = 0.0
-    if tag_to_decide <= original_tag_num:
-        # classified to old tags
-        for i in range(original_tag_num):
-            if (i + 1) == tag_to_decide:
-                p += alpha / distance(rx_signal[classes[i]], rx_signal[index])
-            else:
-                p += distance(rx_signal[classes[i]], rx_signal[index])
-    else:
-        # classified to the new tag
-        for i in range(original_tag_num):
-            p += distance(rx_signal[classes[i]], rx_signal[index])
-    return p
-'''
 
 
 def find_n_max(prob_matrix: np.ndarray, path_to_keep: int):
@@ -73,10 +50,6 @@ def find_n_max(prob_matrix: np.ndarray, path_to_keep: int):
             prob_temp[m_position] = 0.0
 
     return result_index
-
-
-def normalize(arr: np.ndarray):
-    arr /= arr.sum()
 
 
 if __name__ == "__main__":
