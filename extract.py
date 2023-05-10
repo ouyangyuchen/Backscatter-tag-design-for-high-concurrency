@@ -11,9 +11,8 @@ class ExtractPeaks:
         """
         Loading wave signal and other parameters
 
-        Parameters
-        ---
-        filename: '.mat' file, must contains "wave", ("freq", "amp", "phases" are optional)
+        :param filename: '.mat' file, must contains "wave", ("freq", "amp", "phases" are optional)
+        :param n: number of points loaded from file, default is 0 (all)
         """
         file = loadmat(filename)
         self.wave = file["wave"].flatten()
@@ -122,18 +121,16 @@ class ExtractPeaks:
     #             cnt += 1
     #     return cnt / time.size
 
-    def plotAmp(self, lim = 1):
+    def plotAmp(self, axes: plt.Axes):
         if self.tags is None:
             return
-        plt.scatter(np.real(self.amp), np.imag(self.amp), marker='o')
-        plt.title("Amplitudes in I-Q domain")
-        plt.xlabel("real")
-        plt.ylabel("imag")
-        plt.xlim((-lim, lim))
-        plt.ylim((-lim, lim))
-        plt.scatter([0], [0], marker='x', c='green')
-        plt.show()
-        plt.close()
+        axes.scatter(np.real(self.amp), np.imag(self.amp), marker='o')
+        axes.scatter(-np.real(self.amp), -np.imag(self.amp), marker='o')
+        axes.scatter([0], [0], marker='x', c='green')
+        axes.set_title("Amplitudes in I-Q domain")
+        axes.set_xlabel("real")
+        axes.set_ylabel("imag")
+        axes.legend(['positive edges', 'negative edges'])
 
     def plotEdges(self, rx_signal: np.ndarray, n: int):
         fig, axes = plt.subplots(2, 1)

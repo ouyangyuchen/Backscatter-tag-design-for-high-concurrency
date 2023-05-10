@@ -39,22 +39,19 @@ def viterbi(rx_signal: np.ndarray, alpha: float):
     return result_path[0, :]
 
 
-def plotCDF(rx_signal: np.ndarray, result_class: np.ndarray, lim = 5):
+def plotCDF(axes: plt.Axes, rx_signal: np.ndarray, result_class: np.ndarray):
     assert rx_signal.shape[0] == len(result_class)
     assert rx_signal.shape[1] == 3
     max_classes = int(result_class.max())
     colors = ['r', 'orange', 'yellow', 'green', 'blue', 'purple']
     colors.extend(
         ["#" + ''.join([random.choice('0123456789ABCDEF') for _ in range(6)]) for _ in range(max_classes - 6)])
+    axes.scatter([0], [0], marker='x', c='green')
     for i in range(len(result_class)):
         plt.scatter(rx_signal[i, 1], rx_signal[i, 2], s=2, c=colors[result_class[i] - 1])
-    plt.xlabel("Real")
-    plt.ylabel("Imag")
-    plt.xlim((-lim, lim))
-    plt.ylim((-lim, lim))
-    plt.scatter([0], [0], marker='x', c='green')
-    plt.show()
-    plt.close()
+    axes.set_xlabel("Real")
+    axes.set_ylabel("Imag")
+    axes.set_title("Classfied Results in I-Q domain")
 
 
 if __name__ == "__main__":
