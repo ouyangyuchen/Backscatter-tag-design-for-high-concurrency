@@ -6,9 +6,8 @@ from scipy.io import loadmat
 class ExtractPeaks:
     SHIFT = 2
     AWAY = 20
-    MIN_SNR = 10  # the lower bound of SNR (unit: gain, not dB)
 
-    def __init__(self, filename: str) -> None:
+    def __init__(self, filename: str, n: float = 0) -> None:
         """
         Loading wave signal and other parameters
 
@@ -18,13 +17,15 @@ class ExtractPeaks:
         """
         file = loadmat(filename)
         self.wave = file["wave"].flatten()
+        if n > 0.0:
+            self.wave = self.wave[: (n * len(self.wave))]
 
         temp = np.roll(self.wave, ExtractPeaks.SHIFT)
-        temp[:ExtractPeaks.SHIFT] = complex(0.0, 0.0)
         self.impulses = (self.wave - temp)[ExtractPeaks.AWAY:]  # neglect the head elements
 
         # get variance of noise in real and imag parts
-        self.filtered = self.impulses[abs(self.impulses) < np.average(abs(self.impulses)) / 2]
+        thres = np.average(abs(self.impulses)) / 2
+        self.filtered = self.impulses[abs(self.impulses) < thres]
         noises = np.concatenate([np.real(self.filtered), np.imag(self.filtered)])
         self.sigma = np.sqrt(np.average(noises ** 2) / 2)
 
@@ -121,7 +122,7 @@ class ExtractPeaks:
     #             cnt += 1
     #     return cnt / time.size
 
-    def plotAmp(self, lim: int = 5):
+    def plotAmp(self, lim = 1):
         if self.tags is None:
             return
         plt.scatter(np.real(self.amp), np.imag(self.amp), marker='o')

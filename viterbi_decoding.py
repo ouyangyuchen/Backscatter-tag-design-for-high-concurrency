@@ -39,7 +39,7 @@ def viterbi(rx_signal: np.ndarray, alpha: float):
     return result_path[0, :]
 
 
-def plotCDF(rx_signal: np.ndarray, result_class: np.ndarray, lim:int = 5):
+def plotCDF(rx_signal: np.ndarray, result_class: np.ndarray, lim = 5):
     assert rx_signal.shape[0] == len(result_class)
     assert rx_signal.shape[1] == 3
     max_classes = int(result_class.max())
