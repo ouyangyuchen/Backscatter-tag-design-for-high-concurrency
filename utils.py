@@ -27,18 +27,16 @@ def F(
             if cnt >= max_class:
                 break
 
-    distance_list = []
+    distance_list = np.zeros((max_class,))
     for i in range(max_class):
-        distance_list.append(distance(rx_signal[classes[i]], rx_signal[index]))
-    distance_list_sum = sum(distance_list)
-    # existing tags
-    for tag_to_decide in range(max_class):
-        result_prob[tag_to_decide] = distance_list_sum - distance_list[tag_to_decide] + \
-                                     min(1 / distance_list[tag_to_decide], 1e5) * alpha
+        distance_list[i] = distance(rx_signal[classes[i]], rx_signal[index])
+    distance_list = np.log(distance_list)
     # new tag
-    result_prob[max_class] = distance_list_sum
-    result_prob[:max_class + 1] += 1e-5 * np.max(result_prob)
-    result_prob = result_prob / np.max(result_prob)
+    logM2 = np.sum(distance_list)
+    # existing tags
+    logM1 = -2 * distance_list + logM2 + np.log(alpha)
+    result_prob[:max_class] = logM1  # M1 - previous classes
+    result_prob[max_class] = logM2  # M2 - new class
     return result_prob
 
 
@@ -49,11 +47,11 @@ def find_n_max(prob_matrix: np.ndarray, path_to_keep: int):
         m_index = np.argmax(prob_temp, axis=None)
         m_position = np.unravel_index(m_index, np.shape(prob_temp))
         m = prob_temp[m_position]
-        if m == 0.0:
+        if m < -1e6:
             break
         else:
             result_index.append(m_position)
-            prob_temp[m_position] = 0.0
+            prob_temp[m_position] = -1e7
 
     return result_index
 
