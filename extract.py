@@ -1,12 +1,10 @@
 import matplotlib.pyplot as plt
-import numpy as np
-
 from utils import *
 from scipy.io import loadmat
 
 
 class ExtractPeaks:
-    SHIFT = 1
+    SHIFT = 2
     AWAY = 20
     MIN_SNR = 10  # the lower bound of SNR (unit: gain, not dB)
 
@@ -73,7 +71,7 @@ class ExtractPeaks:
         res = np.concatenate((edges, real_part, imag_part), axis=1)
         return res
 
-    def extractRate(self, signal: np.ndarray, fs: float) -> float:
+    def extractRate(self, signal: np.ndarray, fs: float):
         """number of edges extracted / number of total edges.
 
         Available only when the input file has "freq", "phases".
@@ -87,9 +85,7 @@ class ExtractPeaks:
         """
         assert signal.shape[1] == 3
         if self.tags is None:
-            raise ValueError(
-                "The input matlab data must contain phases and frequencies."
-            )
+            return None
         t_max = self.wave.size / fs
         lb = np.ceil(self.phases / np.pi)
         ub = np.floor((2 * np.pi * self.freq * t_max + self.phases) / np.pi)
@@ -124,6 +120,19 @@ class ExtractPeaks:
     #         if std.sum() == 1:
     #             cnt += 1
     #     return cnt / time.size
+
+    def plotAmp(self, lim: int = 5):
+        if self.tags is None:
+            return
+        plt.scatter(np.real(self.amp), np.imag(self.amp), marker='o')
+        plt.title("Amplitudes in I-Q domain")
+        plt.xlabel("real")
+        plt.ylabel("imag")
+        plt.xlim((-lim, lim))
+        plt.ylim((-lim, lim))
+        plt.scatter([0], [0], marker='x', c='green')
+        plt.show()
+        plt.close()
 
     def plotEdges(self, rx_signal: np.ndarray, n: int):
         fig, axes = plt.subplots(2, 1)
