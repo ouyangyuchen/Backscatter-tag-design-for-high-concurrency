@@ -10,31 +10,23 @@ def F(
         alpha: float,
 ):
     def distance(x1: np.ndarray, x2: np.ndarray):
-        if np.dot(x1[1:], x2[1:]) > 0:
-            return pow(x1[1] - x2[1], 2) + pow(x1[2] - x2[2], 2) + 1e-5
-        else:
-            return pow(x1[1] + x2[1], 2) + pow(x1[2] + x2[2], 2) + 1e-5
+        x2 = np.reshape(x2, (1, 2))
+        d1 = np.sum((x1 - x2) ** 2, axis=1)
+        d2 = np.sum((x1 + x2) ** 2, axis=1)
+        d = np.minimum(d1, d2)
+        return np.average(d)
 
-    result_prob = np.zeros((max_class + 1,), dtype=np.float32)
-    classes = np.zeros((max_class,), dtype=int) - 1
-    # find the nearest edge for each class, start from the end
-    cnt = 0
-    for j in range(index - 1, -1, -1):
-        tag = original_path[j]
-        if classes[tag - 1] < 0:
-            classes[tag - 1] = j
-            cnt += 1
-            if cnt >= max_class:
-                break
+    classes = find_pre_index(original_path, index, max_period)
 
     distance_list = np.zeros((max_class,))
     for i in range(max_class):
-        distance_list[i] = distance(rx_signal[classes[i]], rx_signal[index])
+        distance_list[i] = distance(rx_signal[classes[i]][:, 1:], rx_signal[index][1:])
     distance_list = np.log(distance_list)
     # new tag
     logM2 = np.sum(distance_list)
     # existing tags
     logM1 = -2 * distance_list + logM2 + np.log(alpha)
+    result_prob = np.zeros((max_class + 1,), dtype=np.float32)
     result_prob[:max_class] = logM1  # M1 - previous classes
     result_prob[max_class] = logM2  # M2 - new class
     return result_prob
@@ -54,6 +46,23 @@ def find_n_max(prob_matrix: np.ndarray, path_to_keep: int):
             prob_temp[m_position] = -1e7
 
     return result_index
+
+
+def find_pre_index(arr: np.ndarray, index: int, max_period: int):
+    max_class = arr.max()
+    res = [[] for _ in range(max_class)]
+    cnt = np.zeros((max_class,), dtype=int)
+    full = np.zeros((max_class,)).astype(bool)
+
+    for i in range(index - 1, -1, -1):
+        tag = arr[i] - 1
+        if not full[tag]:
+            res[tag].append(i)
+            cnt[tag] += 1
+            full[tag] = cnt[tag] == max_period
+        if full.sum() == max_class:
+            break
+    return res
 
 
 if __name__ == "__main__":
