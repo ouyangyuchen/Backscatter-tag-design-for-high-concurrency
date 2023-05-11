@@ -67,5 +67,23 @@ def filtering(rx_signal: np.ndarray, result_class: np.ndarray):
     return valid_classes
 
 
+def get_freq(rx_signal: np.ndarray, result_path: np.ndarray):
+    indices = dict()
+    for i, tag in enumerate(result_path):
+        if tag != 0:
+            indices.setdefault(tag, []).append(int(rx_signal[i, 0]))
+    # 1st order diff
+    dn = dict()
+    for tag in indices.keys():
+        temp = np.array(indices[tag], dtype=int)
+        dn[tag] = np.average(np.diff(temp))
+    # from dn to freq
+    freq = dict()
+    fs = 1e+7
+    for tag in dn.keys():
+        freq[tag] = fs / dn[tag] / 2
+    return freq
+
+
 if __name__ == "__main__":
     pass
