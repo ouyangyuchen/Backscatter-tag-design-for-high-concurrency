@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import numpy as np
+
 from utils import *
 from scipy.io import loadmat
 
@@ -7,7 +9,7 @@ class ExtractPeaks:
     SHIFT = 2
     AWAY = 20
 
-    def __init__(self, filename: str, n: float = 0) -> None:
+    def __init__(self, filename: str, start: int = 0, end: int = None) -> None:
         """
         Loading wave signal and other parameters
 
@@ -16,8 +18,8 @@ class ExtractPeaks:
         """
         file = loadmat(filename)
         self.wave = file["wave"].flatten()
-        if n > 0.0:
-            self.wave = self.wave[: (n * len(self.wave))]
+        if end is not None:             # the proportion 'n' of wave
+            self.wave = self.wave[start:end]
 
         temp = np.roll(self.wave, ExtractPeaks.SHIFT)
         self.impulses = (self.wave - temp)[ExtractPeaks.AWAY:]  # neglect the head elements
