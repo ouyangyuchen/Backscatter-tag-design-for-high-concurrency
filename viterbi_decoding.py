@@ -1,5 +1,3 @@
-import random
-import matplotlib.pyplot as plt
 from utils import *
 from tqdm import tqdm
 
@@ -38,35 +36,35 @@ def viterbi(rx_signal: np.ndarray, alpha: float):
     return result_path[0, :]
 
 
-def plotCDF(axes: plt.Axes, rx_signal: np.ndarray, result_class: np.ndarray):
-    assert rx_signal.shape[0] == len(result_class)
-    assert rx_signal.shape[1] == 3
-    max_classes = int(result_class.max())
-    colors = ['#e8e8e8', 'r', 'orange', 'yellow', 'green', 'blue', 'purple']
-    colors.extend(
-        ["#" + ''.join([random.choice('0123456789ABCDEF') for _ in range(6)]) for _ in range(max_classes - 6)])
-    axes.scatter([0], [0], marker='x', c='black')
-    for i in range(len(result_class)):
-        plt.scatter(rx_signal[i, 1], rx_signal[i, 2], s=2, c=colors[result_class[i]])
-    axes.set_xlabel("Real")
-    axes.set_ylabel("Imag")
-    axes.set_title("Classfied Results in I-Q domain")
+def F(
+        rx_signal: np.ndarray,
+        original_path: np.ndarray,
+        max_class: int,
+        index: int,
+        max_period: int,
+        alpha: float,
+):
+    def distance(x1: np.ndarray, x2: np.ndarray):
+        x2 = np.reshape(x2, (1, 2))
+        d1 = np.sum((x1 - x2) ** 2, axis=1)
+        d2 = np.sum((x1 + x2) ** 2, axis=1)
+        d = np.minimum(d1, d2)
+        return np.average(d)
 
+    classes = find_pre_index(original_path, index, max_period)
 
-def filtering(rx_signal: np.ndarray, result_class: np.ndarray):
-    assert rx_signal.shape[0] == len(result_class)
-    assert rx_signal.shape[1] == 3
-    max_classes = result_class.max()
-    cnt = np.zeros((max_classes,))
-    for i in range(len(result_class)):
-        cnt[result_class[i] - 1] += 1
-    valid_classes = np.argwhere(cnt > 0.02 * len(result_class)) + 1
-    valid_classes = set(valid_classes.flatten().tolist())
-    # result_class[invalid_edge] = 0
-    for i in range(len(result_class)):
-        if result_class[i] not in valid_classes:
-            result_class[i] = 0
-    return len(valid_classes)
+    distance_list = np.zeros((max_class,))
+    for i in range(max_class):
+        distance_list[i] = distance(rx_signal[classes[i]][:, 1:], rx_signal[index][1:])
+    distance_list = np.log(distance_list)
+    # new tag
+    logM2 = np.sum(distance_list)
+    # existing tags
+    logM1 = -2 * distance_list + logM2 + np.log(alpha)
+    result_prob = np.zeros((max_class + 1,), dtype=np.float32)
+    result_prob[:max_class] = logM1  # M1 - previous classes
+    result_prob[max_class] = logM2  # M2 - new class
+    return result_prob
 
 
 if __name__ == "__main__":
