@@ -35,7 +35,6 @@ def viterbi(rx_signal: np.ndarray, alpha: float):
             prob_paths[j] = prob_matrix[indices[j]]
         result_path[:curr_path_num, :i + 1] = temp_res
 
-    print("Classified tags number: %d" % result_path.max())
     return result_path[0, :]
 
 
@@ -43,15 +42,31 @@ def plotCDF(axes: plt.Axes, rx_signal: np.ndarray, result_class: np.ndarray):
     assert rx_signal.shape[0] == len(result_class)
     assert rx_signal.shape[1] == 3
     max_classes = int(result_class.max())
-    colors = ['r', 'orange', 'yellow', 'green', 'blue', 'purple']
+    colors = ['#e8e8e8', 'r', 'orange', 'yellow', 'green', 'blue', 'purple']
     colors.extend(
         ["#" + ''.join([random.choice('0123456789ABCDEF') for _ in range(6)]) for _ in range(max_classes - 6)])
-    axes.scatter([0], [0], marker='x', c='green')
+    axes.scatter([0], [0], marker='x', c='black')
     for i in range(len(result_class)):
-        plt.scatter(rx_signal[i, 1], rx_signal[i, 2], s=2, c=colors[result_class[i] - 1])
+        plt.scatter(rx_signal[i, 1], rx_signal[i, 2], s=2, c=colors[result_class[i]])
     axes.set_xlabel("Real")
     axes.set_ylabel("Imag")
     axes.set_title("Classfied Results in I-Q domain")
+
+
+def filtering(rx_signal: np.ndarray, result_class: np.ndarray):
+    assert rx_signal.shape[0] == len(result_class)
+    assert rx_signal.shape[1] == 3
+    max_classes = result_class.max()
+    cnt = np.zeros((max_classes,))
+    for i in range(len(result_class)):
+        cnt[result_class[i] - 1] += 1
+    valid_classes = np.argwhere(cnt > 0.02 * len(result_class)) + 1
+    valid_classes = set(valid_classes.flatten().tolist())
+    # result_class[invalid_edge] = 0
+    for i in range(len(result_class)):
+        if result_class[i] not in valid_classes:
+            result_class[i] = 0
+    return len(valid_classes)
 
 
 if __name__ == "__main__":
