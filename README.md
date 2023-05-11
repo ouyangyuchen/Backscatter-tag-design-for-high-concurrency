@@ -1,5 +1,5 @@
 # Backscatter Tag Design for High Concurrency
-## Task 1
+<!-- ## Task 1
 After the hardware design, we receive multiple signals overlapped in the time domain. We extract the transition edges of different signals and then categorize these signals by their distinct frequencies.
 
 ![Figure_1](https://user-images.githubusercontent.com/107864216/222172083-6aeb05de-d1b9-4942-bf33-a5cd46ff3355.png)
@@ -17,4 +17,6 @@ Random noise can be added in window and final square waveform.
 Besides, basic configuration including sampling frequency and simulation time, is saved as a dictionary.
 
 ### Extract edges
-The received signal is always companied by channel noise. **Denoise processing** can be useful by decreasing the amplitude error of extracted edges ahead of **shift difference**. We implement this by convolution with hamming window.
+The received signal is always companied by channel noise. **Denoise processing** can be useful by decreasing the amplitude error of extracted edges ahead of **shift difference**. We implement this by convolution with hamming window. -->
+
+*Under construction.*
