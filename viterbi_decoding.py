@@ -1,3 +1,5 @@
+import numpy as np
+
 from utils import *
 from tqdm import tqdm
 
@@ -51,8 +53,9 @@ def F(
         d = np.minimum(d1, d2)
         return np.average(d)
 
+    # find the indices of previous edges in the same class
     classes = find_pre_index(original_path, index, max_period)
-
+    # get the average distance to the previous points
     distance_list = np.zeros((max_class,))
     for i in range(max_class):
         distance_list[i] = distance(rx_signal[classes[i]][:, 1:], rx_signal[index][1:])
@@ -61,6 +64,16 @@ def F(
     logM2 = np.sum(distance_list)
     # existing tags
     logM1 = -2 * distance_list + logM2 + np.log(alpha)
+    # TODO: Add period information
+    for i in range(max_class):
+        if len(classes[i]) >= 2:
+            p1 = rx_signal[index, 0] - rx_signal[classes[i][0], 0]
+            p2 = rx_signal[classes[i][0], 0] - rx_signal[classes[i][1], 0]
+            temp = max(p1 / p2, p2 / p1)
+            if temp < 3.5:
+                dp = abs(temp - np.around(temp))  # p1 / p2 is close to an integer?
+                logM1[i] = logM1[i] + 4 * (1 - dp * 5)  # if dp < 0.x -> more likely, else less likely
+
     result_prob = np.zeros((max_class + 1,), dtype=np.float32)
     result_prob[:max_class] = logM1  # M1 - previous classes
     result_prob[max_class] = logM2  # M2 - new class
