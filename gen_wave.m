@@ -31,7 +31,7 @@ wave = zeros(1, length(t));
 for i = 1:num
     pwm = amp(i) * square(2*pi * freq(i) * t + phases(i));
     pwm = awgn(pwm, SNR1, 'measured');
-    window = 0.5 * hamming(3);
+    window = hamming(3);
     pwm = conv(pwm, window, "same");
     wave = wave + pwm;
 end
