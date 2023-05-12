@@ -1,5 +1,3 @@
-import numpy as np
-
 from utils import *
 from tqdm import tqdm
 
@@ -7,7 +5,7 @@ from tqdm import tqdm
 def viterbi(rx_signal: np.ndarray, alpha: float):
     # initialize
     peaks_num = np.shape(rx_signal)[0]
-    path_to_keep = 5
+    path_to_keep = 8
     result_path = np.zeros((path_to_keep, peaks_num), dtype=int)  # 分类完成的数组
     prob_paths = np.zeros((path_to_keep,), dtype=np.float64)  # 当前路径的概率
     curr_path_num = 1  # number of current paths
@@ -70,9 +68,9 @@ def F(
             p1 = rx_signal[index, 0] - rx_signal[classes[i][0], 0]
             p2 = rx_signal[classes[i][0], 0] - rx_signal[classes[i][1], 0]
             temp = max(p1 / p2, p2 / p1)
-            if temp < 3.5:
+            if temp < 2.5:
                 dp = abs(temp - np.around(temp))  # p1 / p2 is close to an integer?
-                logM1[i] = logM1[i] + 4 * (1 - dp * 5)  # if dp < 0.x -> more likely, else less likely
+                logM1[i] = logM1[i] + 1 * (1 - dp * 5)  # if dp < 0.x -> more likely, else less likely
 
     result_prob = np.zeros((max_class + 1,), dtype=np.float32)
     result_prob[:max_class] = logM1  # M1 - previous classes
