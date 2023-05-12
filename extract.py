@@ -91,8 +91,8 @@ class ExtractPeaks:
         t_max = self.wave.size / fs
         lb = np.ceil(self.phases / np.pi)
         ub = np.floor((2 * np.pi * self.freq * t_max + self.phases) / np.pi)
-        cnt = np.sum(ub - lb + 1)
-        return signal.shape[0] / cnt
+        cnt = (ub - lb + 1).flatten()
+        return cnt
 
     # def extractAcc(self, signal: np.ndarray, fs: float) -> float:
     #     """The proportion of valid edges in the extracted array. Valid
