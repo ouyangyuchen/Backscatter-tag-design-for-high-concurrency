@@ -79,13 +79,23 @@ def get_freq(rx_signal: np.ndarray, result_path: np.ndarray):
     dn = dict()
     for tag in indices.keys():
         temp = np.array(indices[tag], dtype=int)
-        dn[tag] = np.average(np.diff(temp))
+        dn[tag] = np.median(np.diff(temp))
     # from dn to freq
     freq = dict()
     fs = 1e+7
     for tag in dn.keys():
         freq[tag] = fs / dn[tag] / 2
     return freq
+
+
+def freq_match(freq: dict, gt_freq: np.ndarray, df: float):
+    """Find the closest freq in ground truth for each tag in freq."""
+    res = [[] for _ in range(len(gt_freq))]
+    for tag in freq.keys():
+        i = np.argmin(np.abs(gt_freq - freq[tag]))
+        if abs(freq[tag] - gt_freq[i]) < df:
+            res[i].append(tag)
+    return res
 
 
 if __name__ == "__main__":
