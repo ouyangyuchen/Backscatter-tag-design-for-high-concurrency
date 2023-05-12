@@ -36,11 +36,11 @@ def find_pre_index(arr: np.ndarray, index: int, max_period: int):
     return res
 
 
-def plotCDF(axes: plt.Axes, rx_signal: np.ndarray, result_class: np.ndarray):
+def plotCDF(axes: plt.Axes, rx_signal: np.ndarray, result_class: np.ndarray, snr: int = None):
     assert rx_signal.shape[0] == len(result_class)
     assert rx_signal.shape[1] == 3
     max_classes = int(result_class.max())
-    colors = ['#e8e8e8', 'r', 'orange', 'yellow', 'green', 'blue', 'purple']
+    colors = ['#f7f7f7', 'r', 'orange', 'yellow', 'green', 'blue', 'purple']
     colors.extend(
         ["#" + ''.join([random.choice('0123456789ABCDEF') for _ in range(6)]) for _ in range(max_classes - 6)])
     axes.scatter([0], [0], marker='x', c='black')
@@ -48,7 +48,10 @@ def plotCDF(axes: plt.Axes, rx_signal: np.ndarray, result_class: np.ndarray):
         plt.scatter(rx_signal[i, 1], rx_signal[i, 2], s=2, c=colors[result_class[i]])
     axes.set_xlabel("Real")
     axes.set_ylabel("Imag")
-    axes.set_title("Classfied Results in I-Q domain")
+    if snr is not None:
+        axes.set_title("Classified results  SNR=%d(dB)" % snr)
+    else:
+        axes.set_title("Classified Results in I-Q domain")
 
 
 def filtering(rx_signal: np.ndarray, result_class: np.ndarray):
