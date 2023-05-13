@@ -18,7 +18,7 @@ class ExtractPeaks:
         """
         file = loadmat(filename)
         self.wave = file["wave"].flatten()
-        if end is not None:             # the proportion 'n' of wave
+        if end is not None:  # the proportion 'n' of wave
             self.wave = self.wave[start:end]
 
         temp = np.roll(self.wave, ExtractPeaks.SHIFT)
@@ -88,40 +88,13 @@ class ExtractPeaks:
         assert signal.shape[1] == 3
         if self.tags is None:
             return None
+        if self.phases is None:
+            self.phases = np.zeros((self.tags,))
         t_max = self.wave.size / fs
         lb = np.ceil(self.phases / np.pi)
         ub = np.floor((2 * np.pi * self.freq * t_max + self.phases) / np.pi)
         cnt = (ub - lb + 1).flatten()
         return cnt
-
-    # def extractAcc(self, signal: np.ndarray, fs: float) -> float:
-    #     """The proportion of valid edges in the extracted array. Valid
-    #     edges correspond to exactly one transition edge among all tags.
-    #
-    #     Available only when the input file has "freq", "phases".
-    #
-    #     Parameters
-    #     ---
-    #     signal: np.ndarray[n][3]
-    #         the result matrix returned from extract().
-    #     fs: float
-    #         sampling frequency of the wave signal.
-    #     """
-    #     assert signal.shape[1] == 3
-    #     if self.tags is None:
-    #         raise ValueError(
-    #             "The input matlab data must contain phases and frequencies."
-    #         )
-    #     time = (signal[:, 0] + ExtractPeaks.away) / fs
-    #     tolerant = 2 * self.freq * (ExtractPeaks.shift + 1) / fs
-    #     cnt = 0
-    #     for t in time:
-    #         phase = 2 * self.freq * t + self.phases / np.pi
-    #         std = np.abs(phase - np.around(phase))
-    #         std = std <= tolerant
-    #         if std.sum() == 1:
-    #             cnt += 1
-    #     return cnt / time.size
 
     def plotAmp(self, axes: plt.Axes):
         if self.tags is None:
