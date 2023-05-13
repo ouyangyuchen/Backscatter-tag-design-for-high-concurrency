@@ -2,9 +2,10 @@ from viterbi_decoding import *
 from extract import ExtractPeaks
 
 # load wave
-snr = 25
+snr = 20
 tags = 15
 file = 'signals/tags%d_snr%d_db.mat' % (tags, snr)
+# file = 'test/tag10_28.mat'
 ep = ExtractPeaks(filename=file, start=0, end=None)
 print("sigma \t %.4f" % ep.sigma)
 
@@ -19,9 +20,12 @@ valid_class = filtering(rx_signal, res)
 print("tags: %d" % len(valid_class))
 
 # test performance
-freq = get_freq(rx_signal, res)
+freq, indices = get_freq(rx_signal, res)
 tags_match = freq_match(freq, ep.freq, df=100)
 print(tags_match)
+detected_num, edges_ratio = count_acc(tags_match, ep.extractRate(rx_signal, fs=1e+7), indices)
+print(detected_num)
+print(edges_ratio)
 
 # plot distribution density in the I-Q domain
 fig, axes = plt.subplots(1, 2, figsize=(12, 6))

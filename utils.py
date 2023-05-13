@@ -61,7 +61,7 @@ def filtering(rx_signal: np.ndarray, result_class: np.ndarray):
     cnt = np.zeros((max_classes,))
     for i in range(len(result_class)):
         cnt[result_class[i] - 1] += 1
-    valid_classes = np.argwhere(cnt > 0.02 * len(result_class)) + 1
+    valid_classes = np.argwhere(cnt > 0.01 * len(result_class)) + 1
     valid_classes = set(valid_classes.flatten().tolist())
     # result_class[invalid_edge] = 0
     for i in range(len(result_class)):
@@ -85,7 +85,7 @@ def get_freq(rx_signal: np.ndarray, result_path: np.ndarray):
     fs = 1e+7
     for tag in dn.keys():
         freq[tag] = fs / dn[tag] / 2
-    return freq
+    return freq, indices
 
 
 def freq_match(freq: dict, gt_freq: np.ndarray, df: float):
@@ -96,6 +96,19 @@ def freq_match(freq: dict, gt_freq: np.ndarray, df: float):
         if abs(freq[tag] - gt_freq[i]) < df:
             res[i].append(tag)
     return res
+
+
+def count_acc(match_list: list[list], gt_num: np.ndarray, indices: dict):
+    assert len(match_list) == len(gt_num)
+    detected_tags = 0
+    edges_ratio = np.zeros((len(match_list),), dtype=float)
+    for i in range(len(match_list)):  # tag index in gt
+        if len(match_list[i]) > 0:
+            detected_tags += 1
+            for j in match_list[i]:
+                edges_ratio[i] = edges_ratio[i] + len(indices[j])
+    edges_ratio = edges_ratio / gt_num
+    return detected_tags, edges_ratio
 
 
 if __name__ == "__main__":
