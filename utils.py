@@ -61,7 +61,7 @@ def filtering(rx_signal: np.ndarray, result_class: np.ndarray):
     cnt = np.zeros((max_classes,))
     for i in range(len(result_class)):
         cnt[result_class[i] - 1] += 1
-    valid_classes = np.argwhere(cnt > 0.01 * len(result_class)) + 1
+    valid_classes = np.argwhere(cnt > 0.015 * len(result_class)) + 1
     valid_classes = set(valid_classes.flatten().tolist())
     # result_class[invalid_edge] = 0
     for i in range(len(result_class)):

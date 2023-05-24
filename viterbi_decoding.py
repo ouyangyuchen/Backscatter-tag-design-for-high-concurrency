@@ -19,7 +19,7 @@ def viterbi(rx_signal: np.ndarray, alpha: float):
         # conditional probability on (paths - class)
         for j in range(curr_path_num):  # loop of paths
             max_class = result_path[j].max()
-            prob_matrix[j, 0: max_class + 1] = prob_paths[j] + F(rx_signal, result_path[j, :i], max_class, index=i,
+            prob_matrix[j, 0: max_class + 1] = prob_paths[j] + F(rx_signal, result_path[j, :], max_class, index=i,
                                                                  max_period=4, alpha=alpha)
         # find k max prob indices
         indices = find_n_max(prob_matrix, path_to_keep)
@@ -62,7 +62,7 @@ def F(
     logM2 = np.sum(distance_list)
     # existing tags
     logM1 = -2 * distance_list + logM2 + np.log(alpha)
-    # TODO: Add period information
+    # Add period information
     for i in range(max_class):
         if len(classes[i]) >= 2:
             p1 = rx_signal[index, 0] - rx_signal[classes[i][0], 0]
