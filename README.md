@@ -20,3 +20,4 @@ Besides, basic configuration including sampling frequency and simulation time, i
 The received signal is always companied by channel noise. **Denoise processing** can be useful by decreasing the amplitude error of extracted edges ahead of **shift difference**. We implement this by convolution with hamming window. -->
 
 *Under construction.*
+check [presentation slide](https://github.com/ouyangyuchen/Backscatter-tag-design-for-high-concurrency/blob/master/summary.pdf) for more information.
